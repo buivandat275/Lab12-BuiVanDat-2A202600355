@@ -126,3 +126,30 @@ class CostGuard:
 
 # Singleton
 cost_guard = CostGuard(daily_budget_usd=1.0, global_daily_budget_usd=10.0)
+
+
+r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+
+def check_budget(user_id: str, estimated_cost: float) -> bool:
+    """
+    Sử dụng Redis để track spending của user theo tháng.
+    Return True nếu còn budget, False nếu vượt ($10/tháng).
+    """
+    # 1. Tạo Key theo định dạng budget:user_id:YYYY-MM (ví dụ: budget:user123:2024-05)
+    month_key = datetime.now().strftime("%Y-%m")
+    key = f"budget:{user_id}:{month_key}"
+
+    # 2. Lấy số tiền đã tiêu hiện tại từ Redis
+    current = float(r.get(key) or 0)
+
+    # 3. Kiểm tra xem nếu cộng thêm chi phí mới có vượt $10 không
+    if current + estimated_cost > 10:
+        return False
+
+    # 4. Nếu chưa vượt: Cập nhật số tiền mới vào Redis
+    r.incrbyfloat(key, estimated_cost)
+
+    # 5. Đặt thời gian hết hạn cho Key là 32 ngày (để tự động xóa dữ liệu cũ)
+    r.expire(key, 32 * 24 * 3600)
+
+    return True
