@@ -13,7 +13,7 @@
 # Cài đặt tất cả dependencies
 # Image này KHÔNG được dùng để deploy
 # ──────────────────────────────────────────────────────────
-FROM python:3.11-slim AS builder
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
@@ -33,7 +33,7 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 # STAGE 2: Runtime
 # Chỉ copy những gì cần để CHẠY, không cần để BUILD
 # ──────────────────────────────────────────────────────────
-FROM python:3.11-slim AS runtime
+FROM python:3.12-slim AS runtime
 
 # Tạo non-root user — security best practice
 # Chạy với root trong container là bad practice

@@ -166,6 +166,10 @@ curl http://localhost:8000/ask -X POST \
 **Quan sát:** Image size là bao nhiêu?
 ```bash
 docker images my-agent:develop
+$ docker images my-agent:develop
+
+REPOSITORY   TAG       IMAGE ID       CREATED          SIZE
+my-agent     develop   ef6ce143b795   18 minutes ago   1.15GB
 ```
 
 ###  Exercise 2.3: Multi-stage build
@@ -182,7 +186,12 @@ cd ../production
 Build và so sánh:
 ```bash
 docker build -t my-agent:advanced .
+// docker build -f 02-docker/production/Dockerfile -t my-agent:advanced .
 docker images | grep my-agent
+
+$ docker images | grep my-agent
+my-agent              advanced   c492e83e6e07   About a minute ago   176MB
+my-agent              develop    ef6ce143b795   About an hour ago    1.15GB
 ```
 
 ###  Exercise 2.4: Docker Compose stack
@@ -195,22 +204,42 @@ docker compose up
 
 Services nào được start? Chúng communicate thế nào?
 
+agent-1 (FastAPI): Đã chạy tại port 8000. Log báo Application startup complete và Agent ready. Nó thậm chí đã tự kiểm tra sức khỏe (GET /health) thành công.
+redis-1: Đã sẵn sàng nhận kết nối tại port 6379 (Ready to accept connections tcp).
+qdrant-1 (Vector Database): Đã chạy xong. Bạn có thể truy cập Dashboard của nó tại http://localhost:6333/dashboard.
+nginx-1: Đã cấu hình xong (Configuration complete) và đang đóng vai trò làm Proxy đứng trước agent.
+
 Test:
 ```bash
 # Health check
 curl http://localhost/health
+Invoke-RestMethod -Uri "http://localhost/health" -Method Get
+
+PS D:\AI\Lab12_Deploy\day12_ha-tang-cloud_va_deployment\02-docker\production> Invoke-RestMethod -Uri "http://localhost/health" -Method Get
+   
+status uptime_seconds version timestamp                 
+------ -------------- ------- ---------                 
+ok              251.3 2.0.0   2026-04-17T10:13:55.849368
 
 # Agent endpoint
 curl http://localhost/ask -X POST \
   -H "Content-Type: application/json" \
   -d '{"question": "Explain microservices"}'
+
+  Invoke-RestMethod -Uri "http://localhost/ask" -Method Post -ContentType "application/json" -Body '{"question": "Explain microservices"}'
+
+://localhost/ask" -Method Post -ContentType "application/json" -Body '{"question": "Explain microservices"}'
+   
+answer                                                                                                   
+------                                                                                                   
+Ä¢y lÃ  cÃ¢u tráº£ lá»Ã¢y sáº½ lÃ  response tá»« OpenAI...
 ```
 
 ###  Checkpoint 2
 
-- [ ] Hiểu cấu trúc Dockerfile
-- [ ] Biết lợi ích của multi-stage builds
-- [ ] Hiểu Docker Compose orchestration
+- [X] Hiểu cấu trúc Dockerfile
+- [X] Biết lợi ích của multi-stage builds
+- [X] Hiểu Docker Compose orchestration
 - [ ] Biết cách debug container (`docker logs`, `docker exec`)
 
 ---
@@ -256,6 +285,7 @@ railway init
 
 4. Set environment variables:
 ```bash
++ railway link + railway service
 railway variables set PORT=8000
 railway variables set AGENT_API_KEY=my-secret-key
 ```
@@ -268,7 +298,8 @@ railway up
 6. Get public URL:
 ```bash
 railway domain
-```
+
+https://todo-list-production-5c08.up.railway.app
 
 **Nhiệm vụ:** Test public URL với curl hoặc Postman.
 
